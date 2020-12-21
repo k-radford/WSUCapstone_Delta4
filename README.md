@@ -2,12 +2,15 @@
 
 ## Members: Kate Radford, Travis Cripe, Marco Ares and Joshua Stallworth
 
-### DELTA NSF Gateway: delta-topology.org
+### DELTA NSF Gateway: https://delta-topology.org
 
 ### (Copies of) Applications hosted on the gateway
-*[ChemNetworks](https://gitlab.com/ChemNetworks-Dev/ChemNetworks-2-2)
-*[DeltaPersistence](https://gitlab.com/thrust-2/thrust2/-/tree/master/software/deltapersistence)
-*[AnalyzeTrajectory](https://gitlab.com/Example-landscapes/energy-landscape_nucleophilic-attack)
+[ChemNetworks](https://gitlab.com/ChemNetworks-Dev/ChemNetworks-2-2)
+
+[DeltaPersistence](https://gitlab.com/thrust-2/thrust2/-/tree/master/software/deltapersistence)
+
+[AnalyzeTrajectory](https://gitlab.com/Example-landscapes/energy-landscape_nucleophilic-attack)
+
 The rest are not on public repos
 
 ### Goal
@@ -18,6 +21,7 @@ Due to the need for test methods in order to implement CI/CD for an application,
 
 ### Files uploaded
 ChemNetworks-2-2-master: Holds finalized test script (test.sh) and yaml file (.travis.yml) for TravisCI
-ChemNet: Kate's working directory off stampede2. Holds all shell scripts written from very first to final solution.
-         testChemNet.slurm was tweaked for test.sh and chemNet.slurm is final workflow script for the gateway application.
+
+ChemNet: Kate's working directory off stampede2. Holds all shell scripts written from very first to final solution. testChemNet.slurm was tweaked for test.sh and chemNet.slurm is final workflow script for the gateway application.
+
 DeltaPersistence: Holds test script (testDeltaPersistence.sh) and yaml file (travis.yml) for TravisCI
