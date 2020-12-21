@@ -1,0 +1,15 @@
+launcher.slurm is executable
+
+to use:
+1) module load launcher
+2) sbatch launcher.slurm
+
+to make ur own:
+1) module load launcher
+2) cd $LAUNCHER_DIR/extras/batch-scripts
+3) cp launcher.slurm /home1/07020/dtuser/scratch/capstone/[INSERT NAME]/ChemNetworks-2-2
+4) edit slurm file as needed
+5) sbatch launcher.slurm to run
+
+for more help visit:
+https://blog.uta.edu/xus/2017/10/06/use-launcher-to-bundle-multiple-serial-jobs-on-stampede2/
