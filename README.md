@@ -24,4 +24,4 @@ ChemNetworks-2-2-master: Holds finalized test script (test.sh) and yaml file (.t
 
 ChemNet: Kate's working directory off stampede2. Holds all shell scripts written from very first to final solution. testChemNet.slurm was tweaked for test.sh and chemNet.slurm is final workflow script for the gateway application.
 
-DeltaPersistence: Holds test script (testDeltaPersistence.sh) and yaml file (travis.yml) for TravisCI
+DeltaPersistence: Holds test script (testDeltaPersist.sh) and yaml file (travis.yml) for TravisCI
