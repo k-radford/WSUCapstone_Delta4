@@ -1,0 +1,341 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Data Utilities &#8212; Delta Persistence 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Sublevelset Persistence" href="sublevelpersistence.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sublevelpersistence.html" title="Sublevelset Persistence"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Delta Persistence 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-datautils">
+<span id="data-utilities"></span><h1>Data Utilities<a class="headerlink" href="#module-datautils" title="Permalink to this headline">¶</a></h1>
+<p>Utilities for handling GUDHI and DELTA data types.</p>
+<p>Converts internal data types used by GUDHI and provides methods for
+reading and writing different data formats used by the DELTA team. In
+particular, the following standard formats are used:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="18%" />
+<col width="10%" />
+<col width="10%" />
+<col width="61%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Semantic Type</th>
+<th class="head">Python data type</th>
+<th class="head">File Format</th>
+<th class="head">Specification</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>Energy landscape (sampled)</td>
+<td>Numpy ndarray</td>
+<td>Numpy (<cite>.npy</cite>)</td>
+<td><a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format">https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format</a></td>
+</tr>
+<tr class="row-odd"><td>Energy landscape (meshed)</td>
+<td>Numpy ndarray</td>
+<td>Numpy (<cite>.npy</cite>)</td>
+<td>(same)</td>
+</tr>
+<tr class="row-even"><td>Sublevelset cubical complex</td>
+<td>Numpy ndarray</td>
+<td>Perseus (<cite>.txt</cite>)</td>
+<td><a class="reference external" href="https://gudhi.inria.fr/python/latest/fileformats.html#perseus">https://gudhi.inria.fr/python/latest/fileformats.html#perseus</a></td>
+</tr>
+<tr class="row-odd"><td>Persistence intervals</td>
+<td>List of tuples</td>
+<td>GUDHI (<cite>.pers</cite>)</td>
+<td><a class="reference external" href="https://gudhi.inria.fr/python/latest/fileformats.html#persistence-diagram">https://gudhi.inria.fr/python/latest/fileformats.html#persistence-diagram</a></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>intervals_in_dimension</li>
+<li>is_perseus_file</li>
+<li>remove_inf_bars</li>
+<li>write_sublevels</li>
+<li>write_barcodes</li>
+</ul>
+<dl class="function">
+<dt id="datautils.array_to_barcodes">
+<code class="descclassname">datautils.</code><code class="descname">array_to_barcodes</code><span class="sig-paren">(</span><em>bar_array</em>, <em>dimn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datautils.html#array_to_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datautils.array_to_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an ndarray to a list of birth death times.</p>
+<p>When computing only one dimension of homology, GUDHI returns an
+array of birth/death times rather than a list of birth/death
+tuples. This method converts such arrays into valid birth/death
+lists so that standard interval methods can be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>bar_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier">n*2 numpy ndarray</span></dt>
+<dd><p class="first last">Array of birth death times.</p>
+</dd>
+<dt><strong>dimn</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Dimension for which these are barcodes.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>intervals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuples</span></dt>
+<dd><p class="first last">List of persistent homology intervals.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ValueError</strong> <span class="classifier-delimiter">:</span> <span class="classifier">if the input array is not size n*2 (required to be</span></dt>
+<dd><p class="first last">interpreted as barcodes).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This method should not be necessary. The GUDHI documentation
+specifies that an N*2 array of birth/death times is valid input to
+any of the persistence graphical tools (see
+<a class="reference external" href="http://gudhi.gforge.inria.fr/python/latest/persistence_graphical_tools_ref.html">http://gudhi.gforge.inria.fr/python/latest/persistence_graphical_tools_ref.html</a>).
+However, these methods to not seem to actually work unless the input
+consists of a full persistence values list. Thus this method exists
+to essentially duplicate the private <cite>_array_handler</cite> method in the
+GUDHI graphical tools module.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="datautils.intervals_in_dimension">
+<code class="descclassname">datautils.</code><code class="descname">intervals_in_dimension</code><span class="sig-paren">(</span><em>persistence</em>, <em>dimn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datautils.html#intervals_in_dimension"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datautils.intervals_in_dimension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the persistence intervals in the given dimension.</p>
+<p>When GUDHI computes persistence it always computes in all
+dimensions, however sometimes it is desirable to only return the
+intervals in a single dimension (e.g. if there are a very large
+number of total intervals).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>persistence</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuples</span></dt>
+<dd><p class="first last">A list of tuples of the form (dimn, (birth, death)).</p>
+</dd>
+<dt><strong>dimn</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Dimension of homology to return.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>intervals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuples</span></dt>
+<dd><p class="first last">The list of intervals in the form (dimn, (birth, death)) where
+dimn is restricted to the specified dimension.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This function is not strictly necessary since most GUDHI objects
+possessing persistence have a <cite>persistence_intevals_in_dimension()</cite>
+method. However, sometimes it is convenient to work with the
+already-returned list of intervals rather than the complex object.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="datautils.is_perseus_file">
+<code class="descclassname">datautils.</code><code class="descname">is_perseus_file</code><span class="sig-paren">(</span><em>path</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datautils.html#is_perseus_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datautils.is_perseus_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine if the file given is a valid cubical complex file.</p>
+<p>Cubical complexes are specified by the Perseus file format,
+documented at <a class="reference external" href="https://gudhi.inria.fr/python/latest/fileformats.html">https://gudhi.inria.fr/python/latest/fileformats.html</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>path</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Path to a file.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>is_perseus</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">True if the path corresponds to a valid perseus formatted file.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>FileNotFoundError</strong> <span class="classifier-delimiter">:</span> <span class="classifier">if the path specified is not a file at all.</span></dt>
+<dd></dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datautils.remove_inf_bars">
+<code class="descclassname">datautils.</code><code class="descname">remove_inf_bars</code><span class="sig-paren">(</span><em>persistence</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datautils.html#remove_inf_bars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datautils.remove_inf_bars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove any bars in the persistence which are born at infinity.</p>
+<p>When using the periodic cubical complex method it is possible for
+persistence intervals to be born at infinity. These give an error if
+passed to barcode or diagram plotting methods and need to be
+removed.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>persistence</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuples</span></dt>
+<dd><p class="first last">A list of tuples of the form (dimn, (birth, death)).</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>intervals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of persistence</span></dt>
+<dd><p class="first last">The input list, but with any entries where birth=infinity
+removed.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="datautils.write_sublevels">
+<code class="descclassname">datautils.</code><code class="descname">write_sublevels</code><span class="sig-paren">(</span><em>cplx</em>, <em>filename</em>, <em>periodic=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/datautils.html#write_sublevels"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#datautils.write_sublevels" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a sublevel complex as a Perseus-type file.</p>
+<p>Cubical complexes are arrays, but should be saved to disk in the
+Perseus format for cubical complexes rather than using as a generic
+csv file or similar. This method writes a cubical complex to disk
+in the Perseus format, which GUDHI supports.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cplx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy ndarray</span></dt>
+<dd><p class="first last">Array of appearance values for cells in a filtered cubical
+complex.</p>
+</dd>
+<dt><strong>filename</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
+<dd><p class="first last">Name of file to write to.</p>
+</dd>
+<dt><strong>periodic</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
+<dd><p class="first last">If true, treat coordinates as periodic. Default is true since
+n-alkane data naturally lives on a torus.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Data Utilities</a><ul>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="sublevelpersistence.html"
+                        title="previous chapter">Sublevelset Persistence</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/datautils.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="sublevelpersistence.html" title="Sublevelset Persistence"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Delta Persistence 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Joshua Mirth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

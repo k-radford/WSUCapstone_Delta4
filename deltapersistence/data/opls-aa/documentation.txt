@@ -1,0 +1,16 @@
+simulation files:
+.tpr file contains the simulation setup details. You may need this file if you are using gmx command to process the .xtc file
+.gro file contains the atomic information
+
+potential energy file:
+xxx_pe.dat file contains potential energy in the unit of kJ/mol for each frame
+
+dihedral angle file:
+xxx_dih_ang.dat contains dihedral angles for each frame. It has N-3 columns if there is N carbon atoms. Each column corresponds to one dihedral angle
+
+energy landscape file:
+xxx_oplsaa_pe.dat contains an N-dimensional matrix of potential energy demonstrating the corresponding energy landscape
+
+With OPLS-aa forcefield, all hydrogen atoms are explicitly simulated. In this case, there are additional degrees of freedom introduced. First, the two ending methyl groups can freely rotate. Second, since the number of constraints is even larger than the total degrees of freedom, we cannot fix all the bonds and angles. In our simulation, we fixed all the bond lengths and the angles involving hydrogens, but still, the C-C-C angle may bias the energy landscape. In conclusion, the collective variable phi and the potential energy are no longer one-to-one correspondence. Instead, each phi can correspond to multiple potential energy due to the additional degrees of freedom. The way we dealing this issue is to treat the additional degrees of freedom as the disturbance of original energy landscape. We cut the phi into bins and averaged all the potential energies whose corresponding configurations fall into the bin. To be specific, for butane, we evenly cut phi_1 into 100 bins, and therefore, the n_4_oplsaa_pe.dat is a 100 * 1 matrix. For pentane, we evenly cut phi_1 and phi_2 into 30 * 30 bins, and the n_5_oplsaa_pe.dat is a 30 * 30 matrix. For hexane, we evenly cut phi_1, phi_2, and phi_3 into 20 * 20 * 20 bins, and the n_5_oplsaa_pe.dat is a 20 * 20 * 20 matrix. The number of bins is determined by trying different values to make sure the energy landscape is smooth and the statistics is good enough.
+
+The simulation was performed in the NVT ensemble and at a high temperature (kT ~ 16.6 kJ/mol) to sample the EL throughout. The integration time step was 0.1 fs and the trajectories and energies were dumped per 1 fs. Overall 10000001 frames were dumped. All bond lengths and angles involving hydrogens are fixed by SHAKE algorithm. Intramolecular interactions were ignored.

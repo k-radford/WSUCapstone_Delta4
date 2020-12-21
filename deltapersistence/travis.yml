@@ -1,0 +1,10 @@
+os: linux
+language: c
+compiler:
+- gcc
+- clang
+services:
+- docker
+script:
+- chmod +x testDeltaPersistence.sh
+- ./testDeltaPersistence.sh

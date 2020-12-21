@@ -1,0 +1,307 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>datautils &#8212; Delta Persistence 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Delta Persistence 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for datautils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utilities for handling GUDHI and DELTA data types.</span>
+
+<span class="sd">Converts internal data types used by GUDHI and provides methods for</span>
+<span class="sd">reading and writing different data formats used by the DELTA team. In</span>
+<span class="sd">particular, the following standard formats are used:</span>
+
+<span class="sd">=========================== ================    ================    =============</span>
+<span class="sd">Semantic Type               Python data type    File Format         Specification</span>
+<span class="sd">=========================== ================    ================    =============</span>
+<span class="sd">Energy landscape (sampled)  Numpy ndarray       Numpy (`.npy`)      https://numpy.org/doc/stable/reference/generated/numpy.lib.format.html#module-numpy.lib.format</span>
+<span class="sd">Energy landscape (meshed)   Numpy ndarray       Numpy (`.npy`)      (same)</span>
+<span class="sd">Sublevelset cubical complex Numpy ndarray       Perseus (`.txt`)    https://gudhi.inria.fr/python/latest/fileformats.html#perseus</span>
+<span class="sd">Persistence intervals       List of tuples      GUDHI (`.pers`)     https://gudhi.inria.fr/python/latest/fileformats.html#persistence-diagram</span>
+<span class="sd">=========================== ================    ================    =============</span>
+
+<span class="sd">Functions</span>
+<span class="sd">---------</span>
+
+<span class="sd">* intervals_in_dimension</span>
+<span class="sd">* is_perseus_file</span>
+<span class="sd">* remove_inf_bars</span>
+<span class="sd">* write_sublevels</span>
+<span class="sd">* write_barcodes</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Standard packages</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="write_sublevels"><a class="viewcode-back" href="../datautils.html#datautils.write_sublevels">[docs]</a><span class="k">def</span> <span class="nf">write_sublevels</span><span class="p">(</span><span class="n">cplx</span><span class="p">,</span><span class="n">filename</span><span class="p">,</span><span class="n">periodic</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Save a sublevel complex as a Perseus-type file.</span>
+
+<span class="sd">    Cubical complexes are arrays, but should be saved to disk in the</span>
+<span class="sd">    Perseus format for cubical complexes rather than using as a generic</span>
+<span class="sd">    csv file or similar. This method writes a cubical complex to disk</span>
+<span class="sd">    in the Perseus format, which GUDHI supports.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cplx : numpy ndarray</span>
+<span class="sd">        Array of appearance values for cells in a filtered cubical</span>
+<span class="sd">        complex.</span>
+<span class="sd">    filename : str</span>
+<span class="sd">        Name of file to write to.</span>
+<span class="sd">    periodic : bool, optional</span>
+<span class="sd">        If true, treat coordinates as periodic. Default is true since</span>
+<span class="sd">        n-alkane data naturally lives on a torus.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">sublevel_data</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">sublevel_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cplx</span><span class="o">.</span><span class="n">ndim</span><span class="p">)</span>
+    <span class="c1"># TODO: Currently only allows ALL dimensions to be periodic or NONE.</span>
+    <span class="c1"># Consider adding more flexibility here.</span>
+    <span class="k">if</span> <span class="n">periodic</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cplx</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="n">sublevel_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="o">*</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">cplx</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="n">sublevel_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="n">sublevel_data</span> <span class="o">=</span> <span class="n">sublevel_data</span> <span class="o">+</span> <span class="n">cplx</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">cplx</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="c1"># TODO: Not sure this is the best way to write list to file</span>
+    <span class="c1"># especially given that our data can be very large.</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">filehandle</span><span class="p">:</span>
+        <span class="n">filehandle</span><span class="o">.</span><span class="n">writelines</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublevel_data</span><span class="p">)</span></div>
+
+<span class="c1"># TODO: Writes barcodes to a text file. John is working on this.</span>
+<span class="c1"># TODO: make this write in the `.pers` file format, see</span>
+<span class="c1"># https://gudhi.inria.fr/python/latest/fileformats.html#persistence-diagram</span>
+<span class="c1"># TODO: change input to a numpy ndarray object so persistence is not</span>
+<span class="c1"># recomputed.</span>
+<span class="c1"># TODO: Add an option for dimension?</span>
+<span class="k">def</span> <span class="nf">write_barcodes</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span><span class="n">out_filename</span><span class="p">,</span><span class="n">field</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">input_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+<span class="c1">#    periodic_cubical_complex = gudhi.PeriodicCubicalComplex(</span>
+<span class="c1">#        perseus_file=input_file)</span>
+    <span class="n">diag</span> <span class="o">=</span> <span class="n">periodic_cubical_complex</span><span class="o">.</span><span class="n">persistence</span><span class="p">(</span>
+        <span class="n">homology_coeff_field</span><span class="o">=</span><span class="n">field</span><span class="p">,</span> <span class="n">min_persistence</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">g</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+    <span class="n">g</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">diag</span><span class="p">))</span>
+    <span class="n">g</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<div class="viewcode-block" id="array_to_barcodes"><a class="viewcode-back" href="../datautils.html#datautils.array_to_barcodes">[docs]</a><span class="k">def</span> <span class="nf">array_to_barcodes</span><span class="p">(</span><span class="n">bar_array</span><span class="p">,</span><span class="n">dimn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert an ndarray to a list of birth death times.</span>
+
+<span class="sd">    When computing only one dimension of homology, GUDHI returns an</span>
+<span class="sd">    array of birth/death times rather than a list of birth/death</span>
+<span class="sd">    tuples. This method converts such arrays into valid birth/death</span>
+<span class="sd">    lists so that standard interval methods can be used.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bar_array : n*2 numpy ndarray</span>
+<span class="sd">        Array of birth death times.</span>
+<span class="sd">    dimn : int</span>
+<span class="sd">        Dimension for which these are barcodes.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    intervals : list of tuples</span>
+<span class="sd">        List of persistent homology intervals.</span>
+<span class="sd">  </span>
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError : if the input array is not size n*2 (required to be</span>
+<span class="sd">        interpreted as barcodes).</span>
+
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This method should not be necessary. The GUDHI documentation</span>
+<span class="sd">    specifies that an N*2 array of birth/death times is valid input to</span>
+<span class="sd">    any of the persistence graphical tools (see</span>
+<span class="sd">    http://gudhi.gforge.inria.fr/python/latest/persistence_graphical_tools_ref.html).</span>
+<span class="sd">    However, these methods to not seem to actually work unless the input</span>
+<span class="sd">    consists of a full persistence values list. Thus this method exists</span>
+<span class="sd">    to essentially duplicate the private `_array_handler` method in the</span>
+<span class="sd">    GUDHI graphical tools module.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">bar_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Provided array not formatted as birth/death times.&#39;</span><span class="p">)</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span>  <span class="n">bar_array</span><span class="p">:</span>
+        <span class="n">intervals</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">dimn</span><span class="p">,</span><span class="nb">tuple</span><span class="p">(</span><span class="n">r</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">intervals</span></div>
+
+<span class="c1"># TODO: make this valid</span>
+<div class="viewcode-block" id="is_perseus_file"><a class="viewcode-back" href="../datautils.html#datautils.is_perseus_file">[docs]</a><span class="k">def</span> <span class="nf">is_perseus_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Determine if the file given is a valid cubical complex file.</span>
+
+<span class="sd">    Cubical complexes are specified by the Perseus file format,</span>
+<span class="sd">    documented at https://gudhi.inria.fr/python/latest/fileformats.html.</span>
+<span class="sd">    </span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    path : str</span>
+<span class="sd">        Path to a file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    is_perseus : bool</span>
+<span class="sd">        True if the path corresponds to a valid perseus formatted file.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    FileNotFoundError : if the path specified is not a file at all.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">is_perseus</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="n">is_perseus</span></div>
+
+<div class="viewcode-block" id="remove_inf_bars"><a class="viewcode-back" href="../datautils.html#datautils.remove_inf_bars">[docs]</a><span class="k">def</span> <span class="nf">remove_inf_bars</span><span class="p">(</span><span class="n">persistence</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Remove any bars in the persistence which are born at infinity.</span>
+
+<span class="sd">    When using the periodic cubical complex method it is possible for</span>
+<span class="sd">    persistence intervals to be born at infinity. These give an error if</span>
+<span class="sd">    passed to barcode or diagram plotting methods and need to be</span>
+<span class="sd">    removed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    persistence : list of tuples</span>
+<span class="sd">        A list of tuples of the form (dimn, (birth, death)).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    intervals : list of persistence</span>
+<span class="sd">        The input list, but with any entries where birth=infinity</span>
+<span class="sd">        removed.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Assumes the persistence is sorted by dimension from largest to</span>
+    <span class="c1"># smallest (as it should be from all standard methods).</span>
+    <span class="n">intervals</span> <span class="o">=</span> <span class="n">persistence</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>  <span class="c1"># Do not treat the input as mutable.</span>
+    <span class="n">max_dim</span> <span class="o">=</span> <span class="n">intervals</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">max_dim</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">intervals</span><span class="o">.</span><span class="n">remove</span><span class="p">((</span><span class="n">i</span><span class="p">,(</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)))</span>
+            <span class="c1"># TODO: probably better to pass this message as a return</span>
+            <span class="c1"># value.</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Removed interval born at infinity in dimension &#39;</span> <span class="o">+</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">intervals</span></div>
+
+<div class="viewcode-block" id="intervals_in_dimension"><a class="viewcode-back" href="../datautils.html#datautils.intervals_in_dimension">[docs]</a><span class="k">def</span> <span class="nf">intervals_in_dimension</span><span class="p">(</span><span class="n">persistence</span><span class="p">,</span><span class="n">dimn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Returns the persistence intervals in the given dimension.</span>
+
+<span class="sd">    When GUDHI computes persistence it always computes in all</span>
+<span class="sd">    dimensions, however sometimes it is desirable to only return the</span>
+<span class="sd">    intervals in a single dimension (e.g. if there are a very large</span>
+<span class="sd">    number of total intervals).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    persistence : list of tuples</span>
+<span class="sd">        A list of tuples of the form (dimn, (birth, death)).</span>
+<span class="sd">    dimn : int</span>
+<span class="sd">        Dimension of homology to return.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    intervals : list of tuples</span>
+<span class="sd">        The list of intervals in the form (dimn, (birth, death)) where</span>
+<span class="sd">        dimn is restricted to the specified dimension.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    This function is not strictly necessary since most GUDHI objects</span>
+<span class="sd">    possessing persistence have a `persistence_intevals_in_dimension()`</span>
+<span class="sd">    method. However, sometimes it is convenient to work with the</span>
+<span class="sd">    already-returned list of intervals rather than the complex object.</span>
+<span class="sd">    </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">intervals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">persistence</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">dimn</span><span class="p">:</span>
+            <span class="n">intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">intervals</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Delta Persistence 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Joshua Mirth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

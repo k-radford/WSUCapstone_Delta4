@@ -1,0 +1,523 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>alkaneenergy &#8212; Delta Persistence 1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Delta Persistence 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for alkaneenergy</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Methods for computing and working with alkane energy landscapes.</span>
+
+<span class="sd">The potential energy of the n-alkane molecules admits an approximate</span>
+<span class="sd">analytical formula. This module computes that potential energy directly</span>
+<span class="sd">at a given point or over a mesh. It also implements a more sophisticated</span>
+<span class="sd">analytical formula for the cases of butane and pentane. Several other</span>
+<span class="sd">utilities for working with alkane molecule names are provided.</span>
+
+<span class="sd">Functions</span>
+<span class="sd">---------</span>
+
+<span class="sd">* alkane_to_carbons</span>
+<span class="sd">* carbons_to_alkane</span>
+<span class="sd">* n_alkane_energy_mesh</span>
+<span class="sd">* nonbonded_potential</span>
+<span class="sd">* potential</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="c1"># Set constants and rename things for simplicity.</span>
+<span class="c1"># Numpy operations know to act component-wise on arrays.</span>
+<span class="n">PI</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+<span class="n">cos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span>
+<span class="n">sin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span>
+<span class="n">sqrt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span>
+
+<div class="viewcode-block" id="n_alkane_energy_mesh"><a class="viewcode-back" href="../alkaneenergy.html#alkaneenergy.n_alkane_energy_mesh">[docs]</a><span class="k">def</span> <span class="nf">n_alkane_energy_mesh</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">res</span><span class="o">=.</span><span class="mi">1</span><span class="p">,</span> <span class="n">nonbonded</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a mesh of potential energy values.</span>
+
+<span class="sd">    Meshes the cube [0,2pi]^n and computes values of the potential</span>
+<span class="sd">    energy of the alkane on that mesh.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    n : int</span>
+<span class="sd">        Dimension of the array (n = number of carbons - 3).</span>
+<span class="sd">    res : float, optional</span>
+<span class="sd">        Resolution at which to mesh the grid. Default is 0.1, which is</span>
+<span class="sd">        reasonable for most examples.</span>
+<span class="sd">    nonbonded : bool, optional</span>
+<span class="sd">        If true, use the more detailed formula which accounts for non-</span>
+<span class="sd">        bonded potentials. Default is false. Currently true is only</span>
+<span class="sd">        available if n=2 or n=3.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    V : numpy ndarray</span>
+<span class="sd">        Mesh of potential energy function values.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">n</span><span class="o">*</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">2</span><span class="o">*</span><span class="n">PI</span><span class="p">,</span><span class="n">res</span><span class="p">),)</span>
+    <span class="n">phi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="o">*</span><span class="n">mesh</span><span class="p">,</span> <span class="n">indexing</span><span class="o">=</span><span class="s1">&#39;xy&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">nonbonded</span><span class="p">:</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">nonbonded_potential</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">potential</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">V</span></div>
+
+<div class="viewcode-block" id="potential"><a class="viewcode-back" href="../alkaneenergy.html#alkaneenergy.potential">[docs]</a><span class="k">def</span> <span class="nf">potential</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple analytical formula for n-alkane potential energy.</span>
+
+<span class="sd">    Formula derived by members of YZ&#39;s group. This does not account for</span>
+<span class="sd">    the energy between non-bonded carbon atoms.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    phi : numpy ndarray</span>
+<span class="sd">        Mesh of the domain (n copies of [0,pi]).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    V : numpy ndarray</span>
+<span class="sd">        Function values over the domain.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">V</span> <span class="o">=</span> <span class="p">((</span><span class="mf">2.9288</span><span class="o">-</span><span class="mf">1.4644</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="o">-</span><span class="n">PI</span><span class="p">)</span>
+        <span class="o">+</span> <span class="mf">0.2092</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="o">-</span><span class="n">PI</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="mf">1.6736</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="o">-</span><span class="n">PI</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+        <span class="o">+</span> <span class="mf">0.6276</span><span class="o">+</span><span class="mf">1.8828</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="o">-</span><span class="n">PI</span><span class="p">)</span><span class="o">-</span><span class="mf">2.5104</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="o">-</span><span class="n">PI</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span>
+        <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="p">(</span><span class="mf">0.6276</span><span class="o">+</span><span class="mf">1.8828</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="o">-</span><span class="n">phi</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">PI</span><span class="p">)</span><span class="o">-</span><span class="mf">2.5104</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="o">-</span><span class="n">phi</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">PI</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+        <span class="o">+</span> <span class="mi">3</span><span class="o">*</span><span class="p">(</span><span class="mf">0.6276</span><span class="o">+</span><span class="mf">1.8828</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">PI</span><span class="p">)</span><span class="o">-</span><span class="mf">2.5104</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="o">-</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span><span class="o">*</span><span class="n">PI</span><span class="p">)</span><span class="o">**</span><span class="mi">3</span><span class="p">))</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">V</span><span class="p">[:])</span>      <span class="c1"># V = V(phi_1) + V(phi_2) + ...</span>
+    <span class="k">return</span> <span class="n">V</span></div>
+
+<div class="viewcode-block" id="nonbonded_potential"><a class="viewcode-back" href="../alkaneenergy.html#alkaneenergy.nonbonded_potential">[docs]</a><span class="k">def</span> <span class="nf">nonbonded_potential</span><span class="p">(</span><span class="n">phi</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Detailed analytical formula for n-alkane potential energy.</span>
+
+<span class="sd">    Formula derived by members of YZ&#39;s group. This version accounts for</span>
+<span class="sd">    interactions between non-bonded atoms. Currently only possible for</span>
+<span class="sd">    dimensions 2 and 3 (pentane and hexane).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    phi : numpy ndarray</span>
+<span class="sd">        Mesh of the domain (n copies of [0,pi]).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    V : numpy ndarray</span>
+<span class="sd">        Function values over the domain.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If the dimension of the input domain array is not 2 or 3.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Physical constants.</span>
+    <span class="n">c1</span> <span class="o">=</span> <span class="mf">2.9519</span>
+    <span class="n">c2</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5670</span>
+    <span class="n">c3</span> <span class="o">=</span> <span class="mf">6.5794</span>
+    <span class="n">r0</span> <span class="o">=</span> <span class="mf">0.1529</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="mf">0.7322</span>
+    <span class="n">sig</span> <span class="o">=</span> <span class="mf">0.3905</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">phi</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Pentane formula.</span>
+        <span class="n">r15</span> <span class="o">=</span> <span class="p">((</span><span class="mi">4</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">9</span><span class="p">)</span><span class="o">*</span><span class="n">r0</span><span class="o">*</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">11</span><span class="o">-</span><span class="mi">4</span><span class="o">*</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+                <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="n">Vd</span> <span class="o">=</span> <span class="p">(</span><span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">+</span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">+</span><span class="n">c3</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+              <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span><span class="o">+</span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span><span class="o">+</span><span class="n">c3</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="n">Vnb</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">eps</span><span class="o">*</span><span class="p">((</span><span class="n">sig</span><span class="o">/</span><span class="n">r15</span><span class="p">)</span><span class="o">**</span><span class="mi">12</span> <span class="o">-</span> <span class="p">(</span><span class="n">sig</span><span class="o">/</span><span class="n">r15</span><span class="p">)</span><span class="o">**</span><span class="mi">6</span><span class="p">))</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">Vd</span> <span class="o">+</span> <span class="n">Vnb</span>
+        <span class="k">return</span> <span class="n">V</span>
+    <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>    <span class="c1"># Hexane formula.</span>
+        <span class="n">Vd</span> <span class="o">=</span> <span class="p">(</span><span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">+</span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span><span class="o">+</span><span class="n">c3</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+              <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span><span class="o">+</span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span><span class="o">+</span><span class="n">c3</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+              <span class="o">+</span> <span class="n">c1</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span><span class="o">+</span><span class="n">c2</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">cos</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span><span class="o">+</span><span class="n">c3</span><span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">])))</span>
+        <span class="n">d21</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">((</span><span class="mi">48</span><span class="o">/</span><span class="mi">81</span><span class="p">)</span><span class="o">*</span><span class="n">r0</span><span class="o">*</span><span class="n">r0</span><span class="o">*</span><span class="p">(</span><span class="mi">11</span><span class="o">-</span><span class="mi">4</span><span class="o">*</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+               <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))))</span>
+        <span class="n">d22</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">((</span><span class="mi">48</span><span class="o">/</span><span class="mi">81</span><span class="p">)</span><span class="o">*</span><span class="n">r0</span><span class="o">*</span><span class="n">r0</span><span class="o">*</span><span class="p">(</span><span class="mi">11</span><span class="o">-</span><span class="mi">4</span><span class="o">*</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+               <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))))</span>
+        <span class="n">d3</span> <span class="o">=</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">((</span><span class="mi">1</span><span class="o">/</span><span class="mi">81</span><span class="p">)</span><span class="o">*</span><span class="n">r0</span><span class="o">*</span><span class="n">r0</span><span class="o">*</span><span class="p">(</span><span class="mi">689</span><span class="o">-</span><span class="mi">208</span><span class="o">*</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+               <span class="o">-</span> <span class="mi">256</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="mi">192</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+               <span class="o">-</span> <span class="mi">64</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+               <span class="o">+</span> <span class="mi">128</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+               <span class="o">+</span> <span class="mi">48</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+               <span class="o">-</span> <span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+               <span class="o">+</span> <span class="mi">16</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="mi">9</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+               <span class="o">-</span> <span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">phi</span><span class="p">[</span><span class="mi">2</span><span class="p">])))))</span>
+        <span class="n">Vnb</span> <span class="o">=</span> <span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">eps</span><span class="o">*</span><span class="p">((</span><span class="n">sig</span><span class="o">/</span><span class="n">d21</span><span class="p">)</span><span class="o">**</span><span class="mi">12</span><span class="o">-</span><span class="p">(</span><span class="n">sig</span><span class="o">/</span><span class="n">d21</span><span class="p">)</span><span class="o">**</span><span class="mi">6</span><span class="p">)</span><span class="o">+</span><span class="mi">4</span><span class="o">*</span><span class="n">eps</span><span class="o">*</span><span class="p">((</span><span class="n">sig</span><span class="o">/</span><span class="n">d22</span><span class="p">)</span><span class="o">**</span><span class="mi">12</span> 
+               <span class="o">-</span> <span class="p">(</span><span class="n">sig</span><span class="o">/</span><span class="n">d22</span><span class="p">)</span><span class="o">**</span><span class="mi">6</span><span class="p">)</span><span class="o">+</span><span class="mi">4</span><span class="o">*</span><span class="n">eps</span><span class="o">*</span><span class="p">((</span><span class="n">sig</span><span class="o">/</span><span class="n">d3</span><span class="p">)</span><span class="o">**</span><span class="mi">12</span><span class="o">-</span><span class="p">(</span><span class="n">sig</span><span class="o">/</span><span class="n">d3</span><span class="p">)</span><span class="o">**</span><span class="mi">6</span><span class="p">))</span>
+        <span class="n">V</span> <span class="o">=</span> <span class="n">Vd</span> <span class="o">+</span> <span class="n">Vnb</span><span class="p">;</span>
+        <span class="k">return</span> <span class="n">V</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;For non-bonded energy, n must be 2 or 3 (pentane or &#39;</span>
+                         <span class="s1">&#39;hexane).</span><span class="se">\n</span><span class="s1"> The value of n was: </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="alkane_to_carbons"><a class="viewcode-back" href="../alkaneenergy.html#alkaneenergy.alkane_to_carbons">[docs]</a><span class="k">def</span> <span class="nf">alkane_to_carbons</span><span class="p">(</span><span class="n">alkane</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert an alkane name to the number of carbons it contains.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    alkane : string</span>
+<span class="sd">        Name of an n-alkane molecule</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    carbon : int</span>
+<span class="sd">        Number of carbons in the n-alkane</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">carbon_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;methane&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> 
+        <span class="s1">&#39;ethane&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> 
+        <span class="s1">&#39;propane&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> 
+        <span class="s1">&#39;butane&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> 
+        <span class="s1">&#39;pentane&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> 
+        <span class="s1">&#39;hexane&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> 
+        <span class="s1">&#39;heptane&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> 
+        <span class="s1">&#39;octane&#39;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span> 
+        <span class="s1">&#39;nonane&#39;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span> 
+        <span class="s1">&#39;decane&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="s1">&#39;undecane&#39;</span><span class="p">:</span> <span class="mi">11</span><span class="p">,</span>
+        <span class="s1">&#39;dodecane&#39;</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span>
+        <span class="s1">&#39;tridecane&#39;</span><span class="p">:</span> <span class="mi">13</span><span class="p">,</span>
+        <span class="s1">&#39;tetradecane&#39;</span><span class="p">:</span> <span class="mi">14</span><span class="p">,</span>
+        <span class="s1">&#39;pentadecane&#39;</span><span class="p">:</span> <span class="mi">15</span><span class="p">,</span>
+        <span class="s1">&#39;hexadecane&#39;</span><span class="p">:</span> <span class="mi">16</span><span class="p">,</span>
+        <span class="s1">&#39;heptadecane&#39;</span><span class="p">:</span> <span class="mi">17</span><span class="p">,</span>
+        <span class="s1">&#39;octadecane&#39;</span><span class="p">:</span> <span class="mi">18</span><span class="p">,</span>
+        <span class="s1">&#39;nonadecane&#39;</span><span class="p">:</span> <span class="mi">19</span><span class="p">,</span>
+        <span class="s1">&#39;icosane&#39;</span><span class="p">:</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="s1">&#39;henicosane&#39;</span><span class="p">:</span> <span class="mi">21</span><span class="p">,</span>
+        <span class="s1">&#39;docosane&#39;</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span>
+        <span class="s1">&#39;tricosane&#39;</span><span class="p">:</span> <span class="mi">23</span><span class="p">,</span>
+        <span class="s1">&#39;tetracosane&#39;</span><span class="p">:</span> <span class="mi">24</span><span class="p">,</span>
+        <span class="s1">&#39;pentacosane&#39;</span><span class="p">:</span> <span class="mi">25</span><span class="p">,</span>
+        <span class="s1">&#39;hexacosane&#39;</span><span class="p">:</span> <span class="mi">26</span><span class="p">,</span>
+        <span class="s1">&#39;heptacosane&#39;</span><span class="p">:</span> <span class="mi">27</span><span class="p">,</span>
+        <span class="s1">&#39;octacosane&#39;</span><span class="p">:</span> <span class="mi">28</span><span class="p">,</span>
+        <span class="s1">&#39;nonacosane&#39;</span><span class="p">:</span> <span class="mi">29</span><span class="p">,</span>
+        <span class="s1">&#39;triacontane&#39;</span><span class="p">:</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="s1">&#39;hentriacontane&#39;</span><span class="p">:</span> <span class="mi">31</span><span class="p">,</span>
+        <span class="s1">&#39;dotriacontane&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="s1">&#39;tritriacontane&#39;</span><span class="p">:</span> <span class="mi">33</span><span class="p">,</span>
+        <span class="s1">&#39;tetratriacontane&#39;</span><span class="p">:</span> <span class="mi">34</span><span class="p">,</span>
+        <span class="s1">&#39;pentatriacontane&#39;</span><span class="p">:</span> <span class="mi">35</span><span class="p">,</span>
+        <span class="s1">&#39;hexatriacontane&#39;</span><span class="p">:</span> <span class="mi">36</span><span class="p">,</span>
+        <span class="s1">&#39;heptatriacontane&#39;</span><span class="p">:</span> <span class="mi">37</span><span class="p">,</span>
+        <span class="s1">&#39;octatriacontane&#39;</span><span class="p">:</span> <span class="mi">38</span><span class="p">,</span>
+        <span class="s1">&#39;nonatriacontane&#39;</span><span class="p">:</span> <span class="mi">39</span><span class="p">,</span>
+        <span class="s1">&#39;tetracontane&#39;</span><span class="p">:</span> <span class="mi">40</span><span class="p">,</span>
+        <span class="s1">&#39;hentetracontane&#39;</span><span class="p">:</span> <span class="mi">41</span><span class="p">,</span>
+        <span class="s1">&#39;dotetracontane&#39;</span><span class="p">:</span> <span class="mi">42</span><span class="p">,</span>
+        <span class="s1">&#39;tritetracontane&#39;</span><span class="p">:</span> <span class="mi">43</span><span class="p">,</span>
+        <span class="s1">&#39;tetratetracontane&#39;</span><span class="p">:</span> <span class="mi">44</span><span class="p">,</span>
+        <span class="s1">&#39;pentatetracontane&#39;</span><span class="p">:</span> <span class="mi">45</span><span class="p">,</span>
+        <span class="s1">&#39;hexatetracontane&#39;</span><span class="p">:</span> <span class="mi">46</span><span class="p">,</span>
+        <span class="s1">&#39;heptatetracontane&#39;</span><span class="p">:</span> <span class="mi">47</span><span class="p">,</span>
+        <span class="s1">&#39;octatetracontane&#39;</span><span class="p">:</span> <span class="mi">48</span><span class="p">,</span>
+        <span class="s1">&#39;nonatetracontane&#39;</span><span class="p">:</span> <span class="mi">49</span><span class="p">,</span>
+        <span class="s1">&#39;pentacontane&#39;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
+        <span class="s1">&#39;henpentacontane&#39;</span><span class="p">:</span> <span class="mi">51</span><span class="p">,</span>
+        <span class="s1">&#39;dopentacontane&#39;</span><span class="p">:</span> <span class="mi">52</span><span class="p">,</span>
+        <span class="s1">&#39;tripentacontane&#39;</span><span class="p">:</span> <span class="mi">53</span><span class="p">,</span>
+        <span class="s1">&#39;tetrapentacontane&#39;</span><span class="p">:</span> <span class="mi">54</span><span class="p">,</span>
+        <span class="s1">&#39;pentapentacontane&#39;</span><span class="p">:</span> <span class="mi">55</span><span class="p">,</span>
+        <span class="s1">&#39;hexapentacontane&#39;</span><span class="p">:</span> <span class="mi">56</span><span class="p">,</span>
+        <span class="s1">&#39;heptapentacontane&#39;</span><span class="p">:</span> <span class="mi">57</span><span class="p">,</span>
+        <span class="s1">&#39;octapentacontane&#39;</span><span class="p">:</span> <span class="mi">58</span><span class="p">,</span>
+        <span class="s1">&#39;nonapentacontane&#39;</span><span class="p">:</span> <span class="mi">59</span><span class="p">,</span>
+        <span class="s1">&#39;hexacontane&#39;</span><span class="p">:</span> <span class="mi">60</span><span class="p">,</span> 	
+        <span class="s1">&#39;henhexacontane&#39;</span><span class="p">:</span> <span class="mi">61</span><span class="p">,</span> 	
+        <span class="s1">&#39;dohexacontane&#39;</span><span class="p">:</span> <span class="mi">62</span><span class="p">,</span> 	
+        <span class="s1">&#39;trihexacontane&#39;</span><span class="p">:</span> <span class="mi">63</span><span class="p">,</span> 	
+        <span class="s1">&#39;tetrahexacontane&#39;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span> 	
+        <span class="s1">&#39;pentahexacontane&#39;</span><span class="p">:</span> <span class="mi">65</span><span class="p">,</span> 	
+        <span class="s1">&#39;hexahexacontane&#39;</span><span class="p">:</span> <span class="mi">66</span><span class="p">,</span> 	
+        <span class="s1">&#39;heptahexacontane&#39;</span><span class="p">:</span> <span class="mi">67</span><span class="p">,</span> 	
+        <span class="s1">&#39;octahexacontane&#39;</span><span class="p">:</span> <span class="mi">68</span><span class="p">,</span> 	
+        <span class="s1">&#39;nonahexacontane&#39;</span><span class="p">:</span> <span class="mi">69</span><span class="p">,</span> 	
+        <span class="s1">&#39;heptacontane&#39;</span><span class="p">:</span> <span class="mi">70</span><span class="p">,</span> 	
+        <span class="s1">&#39;henheptacontane&#39;</span><span class="p">:</span> <span class="mi">71</span><span class="p">,</span> 	
+        <span class="s1">&#39;doheptacontane&#39;</span><span class="p">:</span> <span class="mi">72</span><span class="p">,</span> 	
+        <span class="s1">&#39;triheptacontane&#39;</span><span class="p">:</span> <span class="mi">73</span><span class="p">,</span> 	
+        <span class="s1">&#39;tetraheptacontane&#39;</span><span class="p">:</span> <span class="mi">74</span><span class="p">,</span> 	
+        <span class="s1">&#39;pentaheptacontane&#39;</span><span class="p">:</span> <span class="mi">75</span><span class="p">,</span> 	
+        <span class="s1">&#39;hexaheptacontane&#39;</span><span class="p">:</span> <span class="mi">76</span><span class="p">,</span> 	
+        <span class="s1">&#39;heptaheptacontane&#39;</span><span class="p">:</span> <span class="mi">77</span><span class="p">,</span> 	
+        <span class="s1">&#39;octaheptacontane&#39;</span><span class="p">:</span> <span class="mi">78</span><span class="p">,</span> 	
+        <span class="s1">&#39;nonaheptacontane&#39;</span><span class="p">:</span> <span class="mi">79</span><span class="p">,</span> 	
+        <span class="s1">&#39;octacontane&#39;</span><span class="p">:</span> <span class="mi">80</span><span class="p">,</span> 	
+        <span class="s1">&#39;henoctacontane&#39;</span><span class="p">:</span> <span class="mi">81</span><span class="p">,</span> 	
+        <span class="s1">&#39;dooctacontane&#39;</span><span class="p">:</span> <span class="mi">82</span><span class="p">,</span> 	
+        <span class="s1">&#39;trioctaane&#39;</span><span class="p">:</span> <span class="mi">83</span><span class="p">,</span> 	
+        <span class="s1">&#39;tetraoctacontane&#39;</span><span class="p">:</span> <span class="mi">84</span><span class="p">,</span> 	
+        <span class="s1">&#39;pentaoctacontane&#39;</span><span class="p">:</span> <span class="mi">85</span><span class="p">,</span> 	
+        <span class="s1">&#39;hexaoctacontane&#39;</span><span class="p">:</span> <span class="mi">86</span><span class="p">,</span> 	
+        <span class="s1">&#39;heptaoctacontane&#39;</span><span class="p">:</span> <span class="mi">87</span><span class="p">,</span> 	
+        <span class="s1">&#39;octaoctacontane&#39;</span><span class="p">:</span> <span class="mi">88</span><span class="p">,</span> 	
+        <span class="s1">&#39;nonaoctacontane&#39;</span><span class="p">:</span> <span class="mi">89</span><span class="p">,</span> 	
+        <span class="s1">&#39;nonacontane&#39;</span><span class="p">:</span> <span class="mi">90</span><span class="p">,</span> 	
+        <span class="s1">&#39;hennonacontane&#39;</span><span class="p">:</span> <span class="mi">91</span><span class="p">,</span> 	
+        <span class="s1">&#39;dononacontane&#39;</span><span class="p">:</span> <span class="mi">92</span><span class="p">,</span> 	
+        <span class="s1">&#39;trinonacontane&#39;</span><span class="p">:</span> <span class="mi">93</span><span class="p">,</span> 	
+        <span class="s1">&#39;tetranonacontane&#39;</span><span class="p">:</span> <span class="mi">94</span><span class="p">,</span> 	
+        <span class="s1">&#39;pentanonacontane&#39;</span><span class="p">:</span> <span class="mi">95</span><span class="p">,</span> 	
+        <span class="s1">&#39;hexanonacontane&#39;</span><span class="p">:</span> <span class="mi">96</span><span class="p">,</span> 	
+        <span class="s1">&#39;heptanonacontane&#39;</span><span class="p">:</span> <span class="mi">97</span><span class="p">,</span> 	
+        <span class="s1">&#39;octanonacontane&#39;</span><span class="p">:</span> <span class="mi">98</span><span class="p">,</span> 	
+        <span class="s1">&#39;nonanonacontane&#39;</span><span class="p">:</span> <span class="mi">99</span><span class="p">,</span> 	
+        <span class="s1">&#39;hectane&#39;</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> 	
+        <span class="s1">&#39;henihectane&#39;</span><span class="p">:</span> <span class="mi">101</span><span class="p">,</span> 	
+        <span class="s1">&#39;dohectane&#39;</span><span class="p">:</span> <span class="mi">102</span><span class="p">,</span> 	
+        <span class="s1">&#39;trihectane&#39;</span><span class="p">:</span> <span class="mi">103</span><span class="p">,</span> 	
+        <span class="s1">&#39;tetrahectane&#39;</span><span class="p">:</span> <span class="mi">104</span><span class="p">,</span> 	
+        <span class="s1">&#39;pentahectane&#39;</span><span class="p">:</span> <span class="mi">105</span><span class="p">,</span> 	
+        <span class="s1">&#39;hexahectane&#39;</span><span class="p">:</span> <span class="mi">106</span><span class="p">,</span> 	
+        <span class="s1">&#39;heptahectane&#39;</span><span class="p">:</span> <span class="mi">107</span><span class="p">,</span> 	
+        <span class="s1">&#39;octahectane&#39;</span><span class="p">:</span> <span class="mi">108</span><span class="p">,</span> 	
+        <span class="s1">&#39;nonahectane&#39;</span><span class="p">:</span> <span class="mi">109</span><span class="p">,</span> 	
+        <span class="s1">&#39;decahectane&#39;</span><span class="p">:</span> <span class="mi">110</span><span class="p">,</span> 	
+        <span class="s1">&#39;undecahectane&#39;</span><span class="p">:</span> <span class="mi">111</span><span class="p">,</span> 	
+        <span class="s1">&#39;dodecahectane&#39;</span><span class="p">:</span> <span class="mi">112</span><span class="p">,</span> 	
+        <span class="s1">&#39;tridecahectane&#39;</span><span class="p">:</span> <span class="mi">113</span><span class="p">,</span> 	
+        <span class="s1">&#39;tetradecahectane&#39;</span><span class="p">:</span> <span class="mi">114</span><span class="p">,</span> 	
+        <span class="s1">&#39;pentadecahectane&#39;</span><span class="p">:</span> <span class="mi">115</span><span class="p">,</span> 	
+        <span class="s1">&#39;hexadecahectane&#39;</span><span class="p">:</span> <span class="mi">116</span><span class="p">,</span> 	
+        <span class="s1">&#39;heptadecahectane&#39;</span><span class="p">:</span> <span class="mi">117</span><span class="p">,</span> 	
+        <span class="s1">&#39;octadecahectane&#39;</span><span class="p">:</span> <span class="mi">118</span><span class="p">,</span> 	
+        <span class="s1">&#39;nonadecahectane&#39;</span><span class="p">:</span> <span class="mi">119</span><span class="p">,</span> 	
+        <span class="s1">&#39;icosahectane&#39;</span><span class="p">:</span> <span class="mi">120</span>
+    <span class="p">}</span>
+    <span class="n">alkane</span> <span class="o">=</span> <span class="n">alkane</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">carbons</span> <span class="o">=</span> <span class="n">carbon_dict</span><span class="p">[</span><span class="n">alkane</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">carbons</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The n-alkane molecule &#39;</span> <span class="o">+</span> <span class="n">alkane</span> <span class="o">+</span> <span class="s1">&#39; is not recognized.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span>   </div>
+
+<div class="viewcode-block" id="carbons_to_alkane"><a class="viewcode-back" href="../alkaneenergy.html#alkaneenergy.carbons_to_alkane">[docs]</a><span class="k">def</span> <span class="nf">carbons_to_alkane</span><span class="p">(</span><span class="n">carbons</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Gives the name of the n-alkane molecule with a given number of</span>
+<span class="sd">    carbon atoms.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    carbons : int</span>
+<span class="sd">        Number of carbons in the n-alkane.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    alkane : string</span>
+<span class="sd">        Name of the n-alkane molecule with `carbons` carbon atoms.</span>
+<span class="sd">   </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">molecule_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;methane&#39;</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;ethane&#39;</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;propane&#39;</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;butane&#39;</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;pentane&#39;</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">:</span> <span class="s1">&#39;hexane&#39;</span><span class="p">,</span>
+        <span class="mi">7</span><span class="p">:</span> <span class="s1">&#39;heptane&#39;</span><span class="p">,</span>
+        <span class="mi">8</span><span class="p">:</span> <span class="s1">&#39;octane&#39;</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">:</span> <span class="s1">&#39;nonane&#39;</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">:</span> <span class="s1">&#39;decane&#39;</span><span class="p">,</span>
+        <span class="mi">11</span><span class="p">:</span> <span class="s1">&#39;undecane&#39;</span><span class="p">,</span>
+        <span class="mi">12</span><span class="p">:</span> <span class="s1">&#39;dodecane&#39;</span><span class="p">,</span>
+        <span class="mi">13</span><span class="p">:</span> <span class="s1">&#39;tridecane&#39;</span><span class="p">,</span>
+        <span class="mi">14</span><span class="p">:</span> <span class="s1">&#39;tetradecane&#39;</span><span class="p">,</span>
+        <span class="mi">15</span><span class="p">:</span> <span class="s1">&#39;pentadecane&#39;</span><span class="p">,</span>
+        <span class="mi">16</span><span class="p">:</span> <span class="s1">&#39;hexadecan&#39;</span><span class="p">,</span>
+        <span class="mi">17</span><span class="p">:</span> <span class="s1">&#39;heptadecane&#39;</span><span class="p">,</span>
+        <span class="mi">18</span><span class="p">:</span> <span class="s1">&#39;octadecane&#39;</span><span class="p">,</span>
+        <span class="mi">19</span><span class="p">:</span> <span class="s1">&#39;nonadecane&#39;</span><span class="p">,</span>
+        <span class="mi">20</span><span class="p">:</span> <span class="s1">&#39;icosane&#39;</span><span class="p">,</span>
+        <span class="mi">21</span><span class="p">:</span> <span class="s1">&#39;henicosane&#39;</span><span class="p">,</span>
+        <span class="mi">22</span><span class="p">:</span> <span class="s1">&#39;docosane&#39;</span><span class="p">,</span>
+        <span class="mi">23</span><span class="p">:</span> <span class="s1">&#39;tricosane&#39;</span><span class="p">,</span>
+        <span class="mi">24</span><span class="p">:</span> <span class="s1">&#39;tetracosane&#39;</span><span class="p">,</span>
+        <span class="mi">25</span><span class="p">:</span> <span class="s1">&#39;pentacosane&#39;</span><span class="p">,</span>
+        <span class="mi">26</span><span class="p">:</span> <span class="s1">&#39;hexacosane&#39;</span><span class="p">,</span>
+        <span class="mi">27</span><span class="p">:</span> <span class="s1">&#39;heptacosane&#39;</span><span class="p">,</span>
+        <span class="mi">28</span><span class="p">:</span> <span class="s1">&#39;octacosane&#39;</span><span class="p">,</span>
+        <span class="mi">29</span><span class="p">:</span> <span class="s1">&#39;nonacosane&#39;</span><span class="p">,</span>
+        <span class="mi">30</span><span class="p">:</span> <span class="s1">&#39;triacontane&#39;</span><span class="p">,</span>
+        <span class="mi">31</span><span class="p">:</span> <span class="s1">&#39;hentriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">32</span><span class="p">:</span> <span class="s1">&#39;dotriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">33</span><span class="p">:</span> <span class="s1">&#39;tritriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">34</span><span class="p">:</span> <span class="s1">&#39;tetratriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">35</span><span class="p">:</span> <span class="s1">&#39;pentatriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">36</span><span class="p">:</span> <span class="s1">&#39;hexatriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">37</span><span class="p">:</span> <span class="s1">&#39;heptatriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">38</span><span class="p">:</span> <span class="s1">&#39;octatriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">39</span><span class="p">:</span> <span class="s1">&#39;nonatriacontane&#39;</span><span class="p">,</span>
+        <span class="mi">40</span><span class="p">:</span> <span class="s1">&#39;tetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">41</span><span class="p">:</span> <span class="s1">&#39;hentetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">42</span><span class="p">:</span> <span class="s1">&#39;dotetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">43</span><span class="p">:</span> <span class="s1">&#39;tritetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">44</span><span class="p">:</span> <span class="s1">&#39;tetratetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">45</span><span class="p">:</span> <span class="s1">&#39;pentatetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">46</span><span class="p">:</span> <span class="s1">&#39;hexatetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">47</span><span class="p">:</span> <span class="s1">&#39;heptatetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">48</span><span class="p">:</span> <span class="s1">&#39;octatetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">49</span><span class="p">:</span> <span class="s1">&#39;nonatetracontane&#39;</span><span class="p">,</span>
+        <span class="mi">50</span><span class="p">:</span> <span class="s1">&#39;pentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">51</span><span class="p">:</span> <span class="s1">&#39;henpentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">52</span><span class="p">:</span> <span class="s1">&#39;dopentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">53</span><span class="p">:</span> <span class="s1">&#39;tripentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">54</span><span class="p">:</span> <span class="s1">&#39;tetrapentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">55</span><span class="p">:</span> <span class="s1">&#39;pentapentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">56</span><span class="p">:</span> <span class="s1">&#39;hexapentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">57</span><span class="p">:</span> <span class="s1">&#39;heptapentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">58</span><span class="p">:</span> <span class="s1">&#39;octapentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">59</span><span class="p">:</span> <span class="s1">&#39;nonapentacontane&#39;</span><span class="p">,</span>
+        <span class="mi">60</span><span class="p">:</span> <span class="s1">&#39;hexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">61</span><span class="p">:</span> <span class="s1">&#39;henhexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">62</span><span class="p">:</span> <span class="s1">&#39;dohexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">63</span><span class="p">:</span> <span class="s1">&#39;trihexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">64</span><span class="p">:</span> <span class="s1">&#39;tetrahexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">65</span><span class="p">:</span> <span class="s1">&#39;pentahexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">66</span><span class="p">:</span> <span class="s1">&#39;hexahexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">67</span><span class="p">:</span> <span class="s1">&#39;heptahexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">68</span><span class="p">:</span> <span class="s1">&#39;octahexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">69</span><span class="p">:</span> <span class="s1">&#39;nonahexacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">70</span><span class="p">:</span> <span class="s1">&#39;heptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">71</span><span class="p">:</span> <span class="s1">&#39;henheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">72</span><span class="p">:</span> <span class="s1">&#39;doheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">73</span><span class="p">:</span> <span class="s1">&#39;triheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">74</span><span class="p">:</span> <span class="s1">&#39;tetraheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">75</span><span class="p">:</span> <span class="s1">&#39;pentaheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">76</span><span class="p">:</span> <span class="s1">&#39;hexaheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">77</span><span class="p">:</span> <span class="s1">&#39;heptaheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">78</span><span class="p">:</span> <span class="s1">&#39;octaheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">79</span><span class="p">:</span> <span class="s1">&#39;nonaheptacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">80</span><span class="p">:</span> <span class="s1">&#39;octacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">81</span><span class="p">:</span> <span class="s1">&#39;henoctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">82</span><span class="p">:</span> <span class="s1">&#39;dooctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">83</span><span class="p">:</span> <span class="s1">&#39;trioctaane&#39;</span><span class="p">,</span> 	
+        <span class="mi">84</span><span class="p">:</span> <span class="s1">&#39;tetraoctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">85</span><span class="p">:</span> <span class="s1">&#39;pentaoctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">86</span><span class="p">:</span> <span class="s1">&#39;hexaoctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">87</span><span class="p">:</span> <span class="s1">&#39;heptaoctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">88</span><span class="p">:</span> <span class="s1">&#39;octaoctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">89</span><span class="p">:</span> <span class="s1">&#39;nonaoctacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">90</span><span class="p">:</span> <span class="s1">&#39;nonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">91</span><span class="p">:</span> <span class="s1">&#39;hennonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">92</span><span class="p">:</span> <span class="s1">&#39;dononacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">93</span><span class="p">:</span> <span class="s1">&#39;trinonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">94</span><span class="p">:</span> <span class="s1">&#39;tetranonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">95</span><span class="p">:</span> <span class="s1">&#39;pentanonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">96</span><span class="p">:</span> <span class="s1">&#39;hexanonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">97</span><span class="p">:</span> <span class="s1">&#39;heptanonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">98</span><span class="p">:</span> <span class="s1">&#39;octanonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">99</span><span class="p">:</span> <span class="s1">&#39;nonanonacontane&#39;</span><span class="p">,</span> 	
+        <span class="mi">100</span><span class="p">:</span> <span class="s1">&#39;hectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">101</span><span class="p">:</span> <span class="s1">&#39;henihectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">102</span><span class="p">:</span> <span class="s1">&#39;dohectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">103</span><span class="p">:</span> <span class="s1">&#39;trihectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">104</span><span class="p">:</span> <span class="s1">&#39;tetrahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">105</span><span class="p">:</span> <span class="s1">&#39;pentahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">106</span><span class="p">:</span> <span class="s1">&#39;hexahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">107</span><span class="p">:</span> <span class="s1">&#39;heptahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">108</span><span class="p">:</span> <span class="s1">&#39;octahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">109</span><span class="p">:</span> <span class="s1">&#39;nonahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">110</span><span class="p">:</span> <span class="s1">&#39;decahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">111</span><span class="p">:</span> <span class="s1">&#39;undecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">112</span><span class="p">:</span> <span class="s1">&#39;dodecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">113</span><span class="p">:</span> <span class="s1">&#39;tridecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">114</span><span class="p">:</span> <span class="s1">&#39;tetradecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">115</span><span class="p">:</span> <span class="s1">&#39;pentadecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">116</span><span class="p">:</span> <span class="s1">&#39;hexadecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">117</span><span class="p">:</span> <span class="s1">&#39;heptadecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">118</span><span class="p">:</span> <span class="s1">&#39;octadecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">119</span><span class="p">:</span> <span class="s1">&#39;nonadecahectane&#39;</span><span class="p">,</span> 	
+        <span class="mi">120</span><span class="p">:</span> <span class="s1">&#39;icosahectane&#39;</span>
+    <span class="p">}</span>	
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">molecule</span> <span class="o">=</span> <span class="n">molecule_dict</span><span class="p">[</span><span class="n">carbons</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">molecule</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;The name of the n-alkane molecule with &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">carbons</span><span class="p">)</span> <span class="o">+</span>
+            <span class="s1">&#39; carbon atoms is unknown. Must be an integer between 1 and 120.&#39;</span><span class="p">)</span>
+        <span class="k">raise</span></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">Delta Persistence 1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Joshua Mirth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

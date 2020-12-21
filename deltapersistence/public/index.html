@@ -1,0 +1,219 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Delta Persistence Documentation &#8212; Delta Persistence 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Alkane Energy" href="alkaneenergy.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="alkaneenergy.html" title="Alkane Energy"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Delta Persistence 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="delta-persistence-documentation">
+<h1>Delta Persistence Documentation<a class="headerlink" href="#delta-persistence-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="alkaneenergy.html">Alkane Energy</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="alkaneenergy.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sublevelpersistence.html">Sublevelset Persistence</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="sublevelpersistence.html#functions">Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="datautils.html">Data Utilities</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="datautils.html#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p>This package implements the persistent homology code from the NSF-DELTA project.</p>
+</div>
+<div class="section" id="overview">
+<h1>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h1>
+<p>The project “Descriptors of Energy Landscapes using Topological Data Analysis” (DELTA) seeks to use topological data analysis to study the energy landscapes of chemical systems.
+This package contains sourcecode used by the team at Colorado State University for analysis of energy landscapes of alkane molecules.
+The base persistent homology computations are performed by the GUDHI package.
+This package currently contains three modules which supplement the base GUDHI modules.</p>
+<ul class="simple">
+<li>Alkane Energy - provides methods for computing the energy landscapes of n-alkane series.</li>
+<li>Sublevel Persistence - provides general methods for computing sublevel set persistent homology.</li>
+<li>Data Utilities - provides methods for converting data to formats usable by GUDHI and for working with GUDHI output.</li>
+</ul>
+</div>
+<div class="section" id="getting-started">
+<h1>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h1>
+<p>First, the GUDHI library and several other scientific packages for python need to be installed.
+This is easiest if using conda/anaconda.
+Here is a minimal installation procedure for GUDHI:</p>
+<p>Create a clean python 3.8 environment, here called “deltagudhi”, though the name is flexible:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">--</span><span class="n">name</span> <span class="n">deltagudhi</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.8</span>
+</pre></div>
+</div>
+<p>Make that the active environment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">deltagudhi</span>
+</pre></div>
+</div>
+<p>List all the installed packages:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="nb">list</span>
+</pre></div>
+</div>
+<p>At this point there should be basically nothing there. Next, install numpy and matplotlib, which are strict required for both GUDHI and this package:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="n">numpy</span>
+<span class="n">conda</span> <span class="n">install</span> <span class="n">matplotlib</span>
+</pre></div>
+</div>
+<p>Answer yes to any prompts to install other dependencies.
+Install GUDHI from the conda-forge repository:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">conda</span><span class="o">-</span><span class="n">forge</span> <span class="n">gudhi</span>
+</pre></div>
+</div>
+<p>To check that everything works, start python:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span>
+</pre></div>
+</div>
+<p>Once in python, try importing gudhi:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">gudhi</span>
+</pre></div>
+</div>
+<p>If everything went correctly the cursor should advance to the next line in the python interpreter with no output. To double-check, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">gudhi</span><span class="o">.</span><span class="n">__debug_info__</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The output should look something like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Pybind11</span> <span class="n">version</span> <span class="mf">2.5</span><span class="o">.</span><span class="mi">0</span>
+<span class="n">Python</span> <span class="n">version</span> <span class="mf">3.8</span><span class="o">.</span><span class="mi">2</span>
+<span class="n">Cython</span> <span class="n">version</span> <span class="mf">0.29</span><span class="o">.</span><span class="mi">18</span>
+<span class="n">Numpy</span> <span class="n">version</span> <span class="mf">1.14</span><span class="o">.</span><span class="mi">6</span>
+<span class="n">Eigen3</span> <span class="n">version</span> <span class="mf">3.3</span><span class="o">.</span><span class="mi">7</span>
+<span class="n">CGAL</span> <span class="n">header</span> <span class="n">only</span> <span class="n">version</span> <span class="mf">5.00</span><span class="o">.</span><span class="mf">1.100</span>
+<span class="n">GMP_LIBRARIES</span> <span class="o">=</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">anaconda2</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">marktest</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">libgmp</span><span class="o">.</span><span class="n">dylib</span>
+<span class="n">GMPXX_LIBRARIES</span> <span class="o">=</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">anaconda2</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">marktest</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">libgmpxx</span><span class="o">.</span><span class="n">dylib</span>
+<span class="n">MPFR_LIBRARIES</span> <span class="o">=</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">anaconda2</span><span class="o">/</span><span class="n">envs</span><span class="o">/</span><span class="n">marktest</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">libmpfr</span><span class="o">.</span><span class="n">dylib</span>
+</pre></div>
+</div>
+<p>At this point GUDHI is installed.
+To use this package, download/clone the repository and navigate to the folder <cite>deltapersistence/deltapersistence/</cite>.
+Run some basic tests to verify that everything works.
+In detail, at the command prompt, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">persistence_script</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">carbons</span> <span class="mi">5</span> <span class="o">--</span><span class="n">disp</span>
+</pre></div>
+</div>
+<p>This should produce the persistence intervals for the energy landscape of pentane (the n-alkane with 5 carbon atoms).
+Run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">persistence_script</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">f</span> <span class="o">../</span><span class="n">tests</span><span class="o">/</span><span class="n">cube</span><span class="o">.</span><span class="n">txt</span> <span class="o">-</span><span class="n">t</span> <span class="n">cube</span> <span class="o">--</span><span class="n">bars</span>
+</pre></div>
+</div>
+<p>This should generate the bars for pentane, now using the detailed formula which accounts for non-bonded interactions. (This is the energy landscape saved as a cubical complex in <cite>cube.txt</cite>.)
+Run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">persistence_script</span><span class="o">.</span><span class="n">py</span> <span class="o">-</span><span class="n">f</span> <span class="o">../</span><span class="n">tests</span><span class="o">/</span><span class="n">mesh</span><span class="o">.</span><span class="n">npy</span> <span class="o">-</span><span class="n">t</span> <span class="n">mesh</span> <span class="o">--</span><span class="n">diagram</span>
+</pre></div>
+</div>
+<p>This should generate the persistence diagram for hexane from the energy landscape saved as <cite>mesh.npy</cite>. It will take a few moments.
+Finally, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python3</span> <span class="n">persistence_script</span><span class="o">.</span><span class="n">py</span> <span class="o">--</span><span class="n">help</span>
+</pre></div>
+</div>
+<p>This shows all available options.
+Experiment with some of them!</p>
+<p>Assuming that all goes well, the package can be installed for system-wide access.
+To do this, navigate to the folder <cite>deltapersistence</cite> (not the subfolder with the same name), then run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>Doing so allows you to import <cite>deltapersistence</cite> and its provided modules while working in any folder on your system.
+It also installs the script <cite>persistence_script.py</cite> as a command-line utility which can be run from anywhere by calling <cite>persistence_script</cite>.</p>
+<p>If you need capabilities beyond those accessible from <cite>persistence_script.py</cite> you can look at the detailed documentation of the modules <a class="reference internal" href="alkaneenergy.html"><span class="doc">Alkane Energy</span></a>, <a class="reference internal" href="sublevelpersistence.html"><span class="doc">Sublevelset Persistence</span></a>, and <a class="reference internal" href="datautils.html"><span class="doc">Data Utilities</span></a>.</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Delta Persistence Documentation</a></li>
+<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#getting-started">Getting started</a></li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="alkaneenergy.html"
+                        title="next chapter">Alkane Energy</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="alkaneenergy.html" title="Alkane Energy"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">Delta Persistence 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Joshua Mirth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>

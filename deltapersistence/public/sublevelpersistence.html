@@ -1,0 +1,303 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Sublevelset Persistence &#8212; Delta Persistence 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/nature.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Data Utilities" href="datautils.html" />
+    <link rel="prev" title="Alkane Energy" href="alkaneenergy.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="datautils.html" title="Data Utilities"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="alkaneenergy.html" title="Alkane Energy"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Delta Persistence 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-sublevelpersistence">
+<span id="sublevelset-persistence"></span><h1>Sublevelset Persistence<a class="headerlink" href="#module-sublevelpersistence" title="Permalink to this headline">¶</a></h1>
+<p>Tools for computing sublevelset persistence</p>
+<p>The GUDHI library provides methods for computing persistence of general
+filtered complexes (cubical and simplicial). This module provides tools
+for determining the sublevelset filtration of functions (equivalently,
+the lower-star filtration of a complex) in compatible formats.</p>
+<div class="section" id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>_array_neighbors</li>
+<li>cutoff</li>
+<li>mesh_sublevel_persistence</li>
+<li>sample_sublevel_persistence</li>
+<li>sublevel_complex</li>
+</ul>
+<dl class="function">
+<dt id="sublevelpersistence.array_to_barcodes">
+<code class="descclassname">sublevelpersistence.</code><code class="descname">array_to_barcodes</code><span class="sig-paren">(</span><em>bar_array</em>, <em>dimn</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sublevelpersistence.html#array_to_barcodes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sublevelpersistence.array_to_barcodes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an ndarray to a list of birth death times.</p>
+<p>When computing only one dimension of homology, GUDHI returns an
+array of birth/death times rather than a list of birth/death
+tuples. This method converts such arrays into valid birth/death
+lists so that standard interval methods can be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>bar_array</strong> <span class="classifier-delimiter">:</span> <span class="classifier">n*2 numpy ndarray</span></dt>
+<dd><p class="first last">Array of birth death times.</p>
+</dd>
+<dt><strong>dimn</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd><p class="first last">Dimension for which these are barcodes.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>intervals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuples</span></dt>
+<dd><p class="first last">List of persistent homology intervals.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>ValueError</strong> <span class="classifier-delimiter">:</span> <span class="classifier">if the input array is not size n*2 (required to be</span></dt>
+<dd><p class="first last">interpreted as barcodes).</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This method should not be necessary. The GUDHI documentation
+specifies that an N*2 array of birth/death times is valid input to
+any of the persistence graphical tools (see
+<a class="reference external" href="http://gudhi.gforge.inria.fr/python/latest/persistence_graphical_tools_ref.html">http://gudhi.gforge.inria.fr/python/latest/persistence_graphical_tools_ref.html</a>).
+However, these methods to not seem to actually work unless the input
+consists of a full persistence values list. Thus this method exists
+to essentially duplicate the private <cite>_array_handler</cite> method in the
+GUDHI graphical tools module.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="sublevelpersistence.cutoff">
+<code class="descclassname">sublevelpersistence.</code><code class="descname">cutoff</code><span class="sig-paren">(</span><em>fnx</em>, <em>threshold</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sublevelpersistence.html#cutoff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sublevelpersistence.cutoff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Replaces all function values above threshold with infinity.</p>
+<p>GUDHI considers a filtration value of inf to mean that the 
+corresponding cell is not in the domain of the function. For non-
+bonded interactions, cells on the domain can have very large energy
+values which should be excluded.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>fnx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy ndarray</span></dt>
+<dd><p class="first last">Array of function values.</p>
+</dd>
+<dt><strong>threshold</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Maximum function value to allow.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cutfnx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy ndarray</span></dt>
+<dd><p class="first last">function with large values replaced by inf.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sublevelpersistence</span><span class="o">.</span><span class="n">cutoff</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]),</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">array([ 1.,  2., inf])</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="sublevelpersistence.mesh_sublevel_persistence">
+<code class="descclassname">sublevelpersistence.</code><code class="descname">mesh_sublevel_persistence</code><span class="sig-paren">(</span><em>fnx</em>, <em>periodic_dims=[]</em>, <em>field=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sublevelpersistence.html#mesh_sublevel_persistence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sublevelpersistence.mesh_sublevel_persistence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the sublevelset persistence of a function defined on a
+mesh.</p>
+<p>Constructs a filtered cubical complex from a function defined on a
+cubical mesh, then computes the sublevelset persistence intervals
+for that function. Cubical here can be a mesh defined on any
+rectangular grid in Euclidean space, possibly with periodic boundary
+conditions.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>fnx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy ndarray</span></dt>
+<dd><p class="first last">Array of function values, assumed to live on an evenly-spaced
+mesh of a Euclidean rectangle.</p>
+</dd>
+<dt><strong>periodic_dims</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of bools, optional</span></dt>
+<dd><p class="first last">Dimensions on which to assume periodic boundary conditions.
+Default is empty, that is, no periodic boundaries. Length of the
+list must be equal to the dimension of fnx.</p>
+</dd>
+<dt><strong>field</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Field in which to compute homology. Must be a prime number.
+Default is to use Z_2.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>intervals</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
+<dd><p class="first last">List of persistence intervals. Each interval is a tuple of the
+form <cite>(dim, (birth, death))</cite> where <cite>dim</cite> is the integer
+corresponding to the homological dimension and <cite>birth</cite> and
+<cite>death</cite> are floats giving the birth and death times.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sublevelpersistence.sublevel_complex">
+<code class="descclassname">sublevelpersistence.</code><code class="descname">sublevel_complex</code><span class="sig-paren">(</span><em>fnx</em>, <em>levelsize=0.1</em>, <em>perseus=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/sublevelpersistence.html#sublevel_complex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sublevelpersistence.sublevel_complex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a sublevel filtered cubical complex from a function.</p>
+<p>Converts from a mesh of function values to a mesh of filtration
+times at which a function value occurs. Can be passed directly to
+GUDHI with gudhi.cubical_complex(top_dimensional_cells=cmplx).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>fnx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy ndarray</span></dt>
+<dd><p class="first last">Values of a function on a coordinate mesh.</p>
+</dd>
+<dt><strong>levelsize</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">Resolution at which to filter. Default is 0.1 which is
+reasonable for most uses. Changing this value does not
+typically change performance of persistent homology
+computations.</p>
+</dd>
+<dt><strong>perseus</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional.</span></dt>
+<dd><p class="first last">If true convert all filtration values to integers. Default is
+False. GUDHI can compute persistent homology with float-valued
+filtrations, while Perseus requires integer filtration values.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>cmplx</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy ndarray</span></dt>
+<dd><p class="first last">The filtration values of the cubical complex.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Sublevelset Persistence</a><ul>
+<li><a class="reference internal" href="#functions">Functions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="alkaneenergy.html"
+                        title="previous chapter">Alkane Energy</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="datautils.html"
+                        title="next chapter">Data Utilities</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/sublevelpersistence.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="datautils.html" title="Data Utilities"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="alkaneenergy.html" title="Alkane Energy"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Delta Persistence 1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2020, Joshua Mirth.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.8.5.
+    </div>
+  </body>
+</html>
